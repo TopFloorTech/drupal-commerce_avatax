@@ -1,0 +1,11 @@
+{
+  "name": "drupal/commerce_avatax",
+  "type": "drupal-module",
+  "description": "Commerce Avatax",
+  "homepage": "https://github.com/TopFloorTech/drupal-commerce_avatax",
+  "license": "GPL-2.0+",
+  "minimum-stability": "dev",
+  "require": {
+    "avalara/avatax": "^15.5"
+  }
+}
