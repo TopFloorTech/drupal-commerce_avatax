@@ -2,7 +2,6 @@
 
 namespace Drupal\commerce_avatax;
 
-use AvaTax\Address;
 use Drupal\address\AddressInterface;
 
 class AvaTaxAddress {
@@ -13,14 +12,13 @@ class AvaTaxAddress {
   }
 
   public function getAddress() {
-    return new Address(
-      $this->address->getAddressLine1(),
-      $this->address->getAddressLine2(),
-      null,
-      $this->address->getAdministrativeArea(),
-      $this->address->getLocality(),
-      $this->address->getPostalCode(),
-      $this->address->getCountryCode()
-    );
+    return [
+      'line1' => $this->address->getAddressLine1(),
+      'line2' => $this->address->getAddressLine2(),
+      'city' => $this->address->getAdministrativeArea(),
+      'region' => $this->address->getLocality(),
+      'postalCode' => $this->address->getPostalCode(),
+      'country' => $this->address->getCountryCode()
+    ];
   }
 }

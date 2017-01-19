@@ -2,7 +2,6 @@
 
 namespace Drupal\commerce_avatax;
 
-use AvaTax\Line;
 use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_order\Entity\OrderItemInterface;
 use Drupal\commerce_shipping\Entity\ShipmentInterface;
@@ -36,26 +35,32 @@ class AvaTaxLineCollection {
   }
 
   public function addLine(OrderItemInterface $orderItem) {
-    $line = new Line();
-    $line
-      ->setNo(count($this->lines) + 1)
-      ->setItemCode($orderItem->getPurchasedEntity()->get('sku')->value)
-      ->setDescription($orderItem->getTitle())
-      ->setQty($orderItem->getQuantity())
-      ->setAmount($orderItem->getTotalPrice());
+    $line = [
+      'number' => count($this->lines) + 1,
+      'quantity' => $orderItem->getQuantity(),
+      'amount' => $orderItem->getTotalPrice()->getNumber(),
+      'itemCode' => $orderItem->getPurchasedEntity()->get('sku')->value,
+      'description' => $orderItem->getTitle()
+    ];
 
     $this->lines[] = $line;
   }
 
   public function addFreight(ShipmentInterface $shipment) {
-    $line = new Line();
-    $line
-      ->setNo(count($this->lines) + 1)
-      ->setItemCode($shipment->getShippingMethodId())
-      ->setDescription($shipment->getShippingMethod()->getName())
-      ->setQty(1)
-      ->setAmount($shipment->getAmount())
-      ->setTaxCode("FR");
+    $amount = $shipment->getAmount();
+
+    if (empty($amount)) {
+      return;
+    }
+
+    $line = [
+      'number' => count($this->lines) + 1,
+      'quantity' => 1,
+      'amount' => $amount->getNumber(),
+      'itemCode' => $shipment->getShippingMethodId(),
+      'description' => $shipment->getShippingMethod()->getName(),
+      'taxCode' => 'FR',
+    ];
 
     $this->lines[] = $line;
   }
