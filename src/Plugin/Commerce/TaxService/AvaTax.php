@@ -17,6 +17,7 @@ use Drupal\commerce_price\Price;
 use Drupal\commerce_tax_service\Exception\TaxServiceException;
 use Drupal\commerce_tax_service\Plugin\Commerce\TaxService\RemoteTaxServiceBase;
 use Drupal\Core\Form\FormStateInterface;
+use GuzzleHttp\Exception\RequestException;
 use SoapFault;
 
 /**
@@ -164,8 +165,27 @@ class AvaTax extends RemoteTaxServiceBase {
       return;
     }
 
+    try {
+      $response = $this->httpClient->post('url', [
+        'headers' => [
+          'Content-type' => 'application/json',
+          'Authorization' => '',
+        ],
+        'json' => [],
+        'timeout' => 0,
+      ]);
+
+      $data = json_decode($response->getBody(), TRUE);
+    }
+    catch (RequestException $e) {
+      throw new TaxServiceException('Could not calculate the taxes.');
+    }
+
+    // TODO: Replace below.
+
     $config = $this->registerConfig();
     $taxRequest = $this->getTaxRequest();
+
     $taxService = new TaxServiceSoap($config->getId());
 
     try {
