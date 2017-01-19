@@ -1,0 +1,3 @@
+services:
+  commerce_avatax.avatax_config_manager:
+      class: Drupal\commerce_avatax\AvaTaxConfigManager
