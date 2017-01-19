@@ -5,7 +5,6 @@ namespace Drupal\commerce_avatax\Plugin\Commerce\TaxService;
 use Drupal\address\AddressInterface;
 use Drupal\commerce_avatax\AvaTaxAddress;
 use Drupal\commerce_avatax\AvaTaxLineCollection;
-use Drupal\commerce_avatax\CustomerUsageType;
 use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_price\Price;
 use Drupal\commerce_tax_service\Exception\TaxServiceException;
@@ -164,7 +163,6 @@ class AvaTax extends RemoteTaxServiceBase {
           $this->configuration['license']
         ],
         'json' => $parameters,
-        'debug' => TRUE,
       ]);
 
       $data = json_decode($response->getBody(), TRUE);
