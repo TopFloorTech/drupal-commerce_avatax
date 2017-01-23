@@ -105,8 +105,8 @@ class AvaTax extends RemoteTaxServiceBase {
 
     $values = $form_state->getValue($form['#parents']);
 
-    $apiInfo = $values['target_plugin_configuration']['api_information'];
-    $companyInfo = $values['target_plugin_configuration']['company_information'];
+    $apiInfo = $values['api_information'];
+    $companyInfo = $values['company_information'];
 
     if (empty($apiInfo['account'])) {
       $form_state->setError($form, $this->t('A value for Account must be set.'));
