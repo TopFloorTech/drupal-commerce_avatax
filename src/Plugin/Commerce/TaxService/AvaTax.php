@@ -5,6 +5,7 @@ namespace Drupal\commerce_avatax\Plugin\Commerce\TaxService;
 use Drupal\address\AddressInterface;
 use Drupal\commerce_avatax\AvaTaxAddress;
 use Drupal\commerce_avatax\AvaTaxLineCollection;
+use Drupal\commerce_avatax\AvatAxTransactionType;
 use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_price\Price;
 use Drupal\commerce_tax_service\Exception\TaxServiceException;
@@ -36,6 +37,7 @@ class AvaTax extends RemoteTaxServiceBase {
         'license' => '',
         'company_code' => '',
         'include_shipping' => FALSE,
+        'calculate_only' => FALSE,
       ] + parent::defaultConfiguration();
   }
 
@@ -94,6 +96,13 @@ class AvaTax extends RemoteTaxServiceBase {
       '#default_value' => $this->configuration['include_shipping'],
     ];
 
+    $form['settings']['calculate_only'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Calculate only'),
+      '#description' => $this->t('When checked, transactions will not be created at AvaTax.'),
+      '#default_value' => $this->configuration['calculate_only'],
+    ];
+
     return $form;
   }
 
@@ -131,6 +140,7 @@ class AvaTax extends RemoteTaxServiceBase {
     $this->configuration['license'] = $values['api_information']['license'];
     $this->configuration['company_code'] = $values['company_information']['company_code'];
     $this->configuration['include_shipping'] = $values['settings']['include_shipping'];
+    $this->configuration['calculate_only'] = $values['settings']['calculate_only'];
 
     parent::submitConfigurationForm($form, $form_state);
   }
@@ -200,7 +210,7 @@ class AvaTax extends RemoteTaxServiceBase {
     $lines = new AvaTaxLineCollection($order, $this->configuration['include_shipping']);
 
     $data = $this->avaTaxRequest('/transactions/create', [
-      'type' => 'SalesInvoice',
+      'type' => AvatAxTransactionType::SALES_ORDER,
       'companyCode' => $this->configuration['company_code'],
       'code' => $order->id(),
       'date' => date(\DateTime::ATOM, $order->getCreatedTime()),
