@@ -15,8 +15,8 @@ class AvaTaxAddress {
     return [
       'line1' => $this->address->getAddressLine1(),
       'line2' => $this->address->getAddressLine2(),
-      'city' => $this->address->getAdministrativeArea(),
-      'region' => $this->address->getLocality(),
+      'city' => $this->address->getLocality(),
+      'region' => $this->address->getAdministrativeArea(),
       'postalCode' => $this->address->getPostalCode(),
       'country' => $this->address->getCountryCode()
     ];

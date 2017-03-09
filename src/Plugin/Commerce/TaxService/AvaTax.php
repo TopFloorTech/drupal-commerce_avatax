@@ -161,7 +161,7 @@ class AvaTax extends RemoteTaxServiceBase {
     try {
       $this->applyAdjustment($order, $this->getTax());
     } catch (\Exception $exception) {
-      drupal_set_message('Failed to calculate sales tax.');
+      // Do nothing for now.
     }
   }
 
@@ -223,10 +223,8 @@ class AvaTax extends RemoteTaxServiceBase {
       'lines' => $lines->getLines()
     ]);
 
-    if (empty($data['totalTax'])) {
-      throw new TaxServiceException('Could not calculate tax.');
-    }
+    $price = (!empty($data['totalTax'])) ? $data['totalTax'] : '0';
 
-    return new Price("${data['totalTax']}", $order->getTotalPrice()->getCurrencyCode());
+    return new Price("$price", $order->getTotalPrice()->getCurrencyCode());
   }
 }
