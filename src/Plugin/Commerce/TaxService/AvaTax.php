@@ -152,16 +152,21 @@ class AvaTax extends RemoteTaxServiceBase {
     /** @var OrderInterface $order */
     $order = $this->getTargetEntity();
 
-    $billingProfile = $order->getBillingProfile();
+    if (!$order->get('shipments')->isEmpty()) {
+      /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment */
+      $shipment = $order->get('shipments')->entity;
 
-    if (!$billingProfile || $billingProfile->get('address')->isEmpty()) {
-      return;
-    }
+      $profile = $shipment->getShippingProfile();
 
-    try {
-      $this->applyAdjustment($order, $this->getTax());
-    } catch (\Exception $exception) {
-      // Do nothing for now.
+      if (!$profile || $profile->get('address')->isEmpty()) {
+        return;
+      }
+
+      try {
+        $this->applyAdjustment($order, $this->getTax());
+      } catch (\Exception $exception) {
+        // Do nothing for now.
+      }
     }
   }
 
@@ -200,30 +205,37 @@ class AvaTax extends RemoteTaxServiceBase {
     /** @var OrderInterface $order */
     $order = $this->getTargetEntity();
 
-    $billingProfile = $order->getBillingProfile();
+    $price = 0;
 
-    /** @var AddressInterface $billingAddressItem */
-    $billingAddressItem = $billingProfile->get('address')->first();
+    if (!$order->get('shipments')->isEmpty()) {
+      /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment */
+      $shipment = $order->get('shipments')->entity;
 
-    $originAddress = new AvaTaxAddress($order->getStore()->getAddress());
-    $billingAddress = new AvaTaxAddress($billingAddressItem);
-    $lines = new AvaTaxLineCollection($order, $this->configuration['include_shipping']);
+      $profile = $shipment->getShippingProfile();
 
-    $data = $this->avaTaxRequest('/transactions/create', [
-      'type' => AvatAxTransactionType::SALES_ORDER,
-      'companyCode' => $this->configuration['company_code'],
-      'code' => $order->id(),
-      'date' => date(\DateTime::ATOM, $order->getCreatedTime()),
-      'customerCode' => $order->getCustomerId(),
-      'currencyCode' => $order->getTotalPrice()->getCurrencyCode(),
-      'addresses' => [
-        'ShipFrom' => $originAddress->getAddress(),
-        'ShipTo' => $billingAddress->getAddress()
-      ],
-      'lines' => $lines->getLines()
-    ]);
+      /** @var AddressInterface $addressItem */
+      $addressItem = $profile->get('address')->first();
 
-    $price = (!empty($data['totalTax'])) ? $data['totalTax'] : '0';
+      $originAddress = new AvaTaxAddress($order->getStore()->getAddress());
+      $shippingAddress = new AvaTaxAddress($addressItem);
+      $lines = new AvaTaxLineCollection($order, $this->configuration['include_shipping']);
+
+      $data = $this->avaTaxRequest('/transactions/create', [
+        'type' => AvatAxTransactionType::SALES_ORDER,
+        'companyCode' => $this->configuration['company_code'],
+        'code' => $order->id(),
+        'date' => date(\DateTime::ATOM, $order->getCreatedTime()),
+        'customerCode' => $order->getCustomerId(),
+        'currencyCode' => $order->getTotalPrice()->getCurrencyCode(),
+        'addresses' => [
+          'ShipFrom' => $originAddress->getAddress(),
+          'ShipTo' => $shippingAddress->getAddress()
+        ],
+        'lines' => $lines->getLines()
+      ]);
+
+      $price = (!empty($data['totalTax'])) ? $data['totalTax'] : '0';
+    }
 
     return new Price("$price", $order->getTotalPrice()->getCurrencyCode());
   }
