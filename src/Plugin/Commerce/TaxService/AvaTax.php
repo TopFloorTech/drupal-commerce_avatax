@@ -12,6 +12,7 @@ use Drupal\commerce_tax_service\Exception\TaxServiceException;
 use Drupal\commerce_tax_service\Plugin\Commerce\TaxService\RemoteTaxServiceBase;
 use Drupal\commerce_tax_service\TaxServiceMode;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Utility\Error;
 use GuzzleHttp\Exception\RequestException;
 
 /**
@@ -165,12 +166,18 @@ class AvaTax extends RemoteTaxServiceBase {
       try {
         $this->applyAdjustment($order, $this->getTax());
       } catch (\Exception $exception) {
-        // Do nothing for now.
+        watchdog_exception('commerce_tax_service', $exception);
       }
     }
   }
 
   protected function avaTaxRequest($requestPath, $parameters = []) {
+    if (in_array('request', $this->configuration['log'])) {
+      $this->logger->debug('Sending API request to AvaTax.<br>@request', [
+        '@request' => $parameters,
+      ]);
+    }
+
     try {
       $response = $this->httpClient->post($this->getApiUrl($requestPath), [
         'auth' => [
@@ -182,10 +189,16 @@ class AvaTax extends RemoteTaxServiceBase {
 
       $data = json_decode($response->getBody(), TRUE);
 
+      if (in_array('response', $this->configuration['log'])) {
+        $this->logger->debug('Received API response from AvaTax.<br>@response', [
+          '@response' => $parameters,
+        ]);
+      }
+
       return $data;
     }
     catch (RequestException $e) {
-      throw new TaxServiceException('Could not calculate the taxes.');
+      throw new TaxServiceException('Could not calculate the taxes.', $e->getCode(), $e);
     }
   }
 
