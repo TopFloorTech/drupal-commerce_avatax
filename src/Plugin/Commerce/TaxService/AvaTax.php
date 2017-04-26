@@ -173,9 +173,8 @@ class AvaTax extends RemoteTaxServiceBase {
 
   protected function avaTaxRequest($requestPath, $parameters = []) {
     if (in_array('request', $this->configuration['log'])) {
-      $this->logger->debug('Sending API request to AvaTax.<br>@request', [
-        '@request' => $parameters,
-      ]);
+      // @todo Put request info into message.
+      $this->logger->debug('Sending API request to AvaTax.');
     }
 
     try {
@@ -190,9 +189,8 @@ class AvaTax extends RemoteTaxServiceBase {
       $data = json_decode($response->getBody(), TRUE);
 
       if (in_array('response', $this->configuration['log'])) {
-        $this->logger->debug('Received API response from AvaTax.<br>@response', [
-          '@response' => $parameters,
-        ]);
+        // @todo: Put response info into message.
+        $this->logger->debug('Received API response from AvaTax.');
       }
 
       return $data;
