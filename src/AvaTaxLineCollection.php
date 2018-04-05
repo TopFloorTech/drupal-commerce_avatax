@@ -6,6 +6,7 @@ use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_order\Entity\OrderItemInterface;
 use Drupal\commerce_shipping\Entity\ShipmentInterface;
 use Drupal\commerce_shipping\Plugin\Field\FieldType\ShipmentItem;
+use Drupal\Core\Entity\EntityInterface;
 
 class AvaTaxLineCollection {
   protected $lines = [];
@@ -35,15 +36,19 @@ class AvaTaxLineCollection {
   }
 
   public function addLine(OrderItemInterface $orderItem) {
-    $line = [
-      'number' => count($this->lines) + 1,
-      'quantity' => $orderItem->getQuantity(),
-      'amount' => $orderItem->getTotalPrice()->getNumber(),
-      'itemCode' => $orderItem->getPurchasedEntity()->get('sku')->value,
-      'description' => $orderItem->getTitle()
-    ];
+    $purchasedEntity = $orderItem->getPurchasedEntity();
 
-    $this->lines[] = $line;
+    if ($purchasedEntity instanceof EntityInterface) {
+      $line = [
+        'number' => count($this->lines) + 1,
+        'quantity' => $orderItem->getQuantity(),
+        'amount' => $orderItem->getTotalPrice()->getNumber(),
+        'itemCode' => $orderItem->getPurchasedEntity()->get('sku')->value,
+        'description' => $orderItem->getTitle()
+      ];
+
+      $this->lines[] = $line;
+    }
   }
 
   public function addFreight(ShipmentInterface $shipment) {
@@ -59,7 +64,7 @@ class AvaTaxLineCollection {
       'amount' => $amount->getNumber(),
       'itemCode' => $shipment->getShippingMethodId(),
       'description' => $shipment->getShippingMethod()->getName(),
-      'taxCode' => 'FR',
+      'taxCode' => 'FR020200',
     ];
 
     $this->lines[] = $line;

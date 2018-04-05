@@ -172,9 +172,10 @@ class AvaTax extends RemoteTaxServiceBase {
   }
 
   protected function avaTaxRequest($requestPath, $parameters = []) {
-    if (in_array('request', $this->configuration['log'])) {
-      // @todo Put request info into message.
-      $this->logger->debug('Sending API request to AvaTax.');
+    if (\in_array('request', $this->configuration['log'], FALSE)) {
+      $this->logger->debug($this->t('Sending API request to AvaTax: @request', [
+        '@request' => print_r($parameters, TRUE),
+      ]));
     }
 
     try {
@@ -188,9 +189,11 @@ class AvaTax extends RemoteTaxServiceBase {
 
       $data = json_decode($response->getBody(), TRUE);
 
-      if (in_array('response', $this->configuration['log'])) {
-        // @todo: Put response info into message.
-        $this->logger->debug('Received API response from AvaTax.');
+      if (\in_array('response', $this->configuration['log'], FALSE)) {
+        $this->logger->debug($this->t('Received API response from AvaTax: @response', [
+          '@response' => print_r($data, TRUE),
+        ]));
+
       }
 
       return $data;
@@ -231,21 +234,25 @@ class AvaTax extends RemoteTaxServiceBase {
       $shippingAddress = new AvaTaxAddress($addressItem);
       $lines = new AvaTaxLineCollection($order, $this->configuration['include_shipping']);
 
-      $data = $this->avaTaxRequest('/transactions/create', [
-        'type' => AvatAxTransactionType::SALES_ORDER,
-        'companyCode' => $this->configuration['company_code'],
-        'code' => $order->id(),
-        'date' => date(\DateTime::ATOM, $order->getCreatedTime()),
-        'customerCode' => $order->getCustomerId(),
-        'currencyCode' => $order->getTotalPrice()->getCurrencyCode(),
-        'addresses' => [
-          'ShipFrom' => $originAddress->getAddress(),
-          'ShipTo' => $shippingAddress->getAddress()
-        ],
-        'lines' => $lines->getLines()
-      ]);
+      try {
+        $data = $this->avaTaxRequest('/transactions/create', [
+          'type' => AvatAxTransactionType::SALES_ORDER,
+          'companyCode' => $this->configuration['company_code'],
+          'code' => $order->id(),
+          'date' => date(\DateTime::ATOM, $order->getCreatedTime()),
+          'customerCode' => $order->getCustomerId(),
+          'currencyCode' => $order->getTotalPrice()->getCurrencyCode(),
+          'addresses' => [
+            'ShipFrom' => $originAddress->getAddress(),
+            'ShipTo' => $shippingAddress->getAddress()
+          ],
+          'lines' => $lines->getLines()
+        ]);
+      } catch (TaxServiceException $e) {
+        $this->logger->error($e->getMessage());
+      }
 
-      $price = (!empty($data['totalTax'])) ? $data['totalTax'] : '0';
+      $price = !empty($data['totalTax']) ? $data['totalTax'] : '0';
     }
 
     return new Price("$price", $order->getTotalPrice()->getCurrencyCode());
